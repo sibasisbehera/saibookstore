@@ -298,9 +298,7 @@ table.it{width:100%;border-collapse:collapse;font-size:12px;min-width:440px;}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .toast.ok{background:var(--ok);}.toast.er{background:var(--ac);}
 
-@media print{body *{visibility:hidden;}#pra,#pra *{visibility:visible;}#pra{position:fixed;top:0;left:0;width:100%;background:#fff;}}
-#pra{display:none;font-family:'Noto Sans',sans-serif;padding:18px;background:#fff;color:#111;}
-#pra.show{display:block;}
+/* print handled via jsPDF blob — no CSS print rules needed */
 </style>
 </head>
 <body>
@@ -420,7 +418,8 @@ table.it{width:100%;border-collapse:collapse;font-size:12px;min-width:440px;}
       <div class="fg"><label>Invoice No.</label><input type="text" id="invoice-no"/></div>
       <div class="fg"><label>Date</label><input type="date" id="bill-date"/></div>
       <div class="fg"><label>Customer Name</label><input type="text" id="cust-name" placeholder="Walk-in" oninput="saveDraft()"/></div>
-      <div class="fg"><label>V-No / Phone</label><input type="text" id="cust-vno" placeholder="V-No or mobile" oninput="saveDraft()"/></div>
+      <div class="fg"><label>Phone / Mobile No.</label><input type="text" id="cust-phone" placeholder="Customer mobile no." oninput="saveDraft()"/></div>
+      <div class="fg"><label>V-No</label><input type="text" id="cust-vno" placeholder="Voucher no. (optional)" oninput="saveDraft()"/></div>
       <div class="fg s12"><label>Customer Address (Optional)</label><input type="text" id="cust-addr" oninput="saveDraft()"/></div>
       <div class="fg"><label>Bill Type</label><select id="bill-type" onchange="saveDraft()"><option value="cash">Cash</option><option value="credit">Credit</option></select></div>
       <div class="fg"><label>GST Rate</label><select id="gst-rate" onchange="applyGST()"><option value="0">0%</option><option value="2.5">2.5%+2.5%=5%</option><option value="6">6%+6%=12%</option><option value="9" selected>9%+9%=18%</option><option value="14">14%+14%=28%</option></select></div>
@@ -555,7 +554,6 @@ table.it{width:100%;border-collapse:collapse;font-size:12px;min-width:440px;}
   </div>
 </div>
 
-<div id="pra"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -718,7 +716,7 @@ function getBD(){
   var dv=parseFloat(document.getElementById('discount').value)||0;
   var da=DT==='pct'?sub*dv/100:dv;
   var tot=Math.max(0,sub-da);
-  return Object.assign({invoiceNo:document.getElementById('invoice-no').value,date:document.getElementById('bill-date').value,custName:document.getElementById('cust-name').value,custVno:document.getElementById('cust-vno').value,custAddr:document.getElementById('cust-addr').value,billType:document.getElementById('bill-type').value,gstRate:gr,discVal:dv,discType:DT,discAmt:da,items:items,taxable:tax,sgst:sg,cgst:cg,subtotal:sub,total:tot,amountWords:n2w(tot)},S);
+  return Object.assign({invoiceNo:document.getElementById('invoice-no').value,date:document.getElementById('bill-date').value,custName:document.getElementById('cust-name').value,custPhone:document.getElementById('cust-phone').value,custVno:document.getElementById('cust-vno').value,custAddr:document.getElementById('cust-addr').value,billType:document.getElementById('bill-type').value,gstRate:gr,discVal:dv,discType:DT,discAmt:da,items:items,taxable:tax,sgst:sg,cgst:cg,subtotal:sub,total:tot,amountWords:n2w(tot)},S);
 }
 
 /* ── FILL FORM ── */
@@ -726,6 +724,7 @@ function fillBillForm(b){
   document.getElementById('invoice-no').value=b.invoiceNo||'';
   document.getElementById('bill-date').value=b.date||'';
   document.getElementById('cust-name').value=b.custName||'';
+  document.getElementById('cust-phone').value=b.custPhone||'';
   document.getElementById('cust-vno').value=b.custVno||'';
   document.getElementById('cust-addr').value=b.custAddr||'';
   document.getElementById('bill-type').value=b.billType||'cash';
@@ -778,8 +777,9 @@ function buildA4(d){
   return'<div class="a4h"><div class="a4hl">'+logoHTML+'<div><div class="a4sn">'+d.shopname+'</div><div class="a4ss">'+d.address+'<br/>Mob: '+d.mobile+' | GST: '+d.gstin+'</div></div></div>'
     +'<div><div class="a4mt">CASH / CREDIT MEMO</div><div style="font-size:9px;color:#888;text-align:right;margin-top:2px">'+d.billType.toUpperCase()+'</div></div></div>'
     +'<div class="a4meta-line"><span><b>Invoice No:</b> '+d.invoiceNo+'</span><span><b>Date:</b> '+fmtD(d.date)+'</span></div>'
-    +'<div class="a4meta-line"><span><b>Customer:</b> '+(d.custName||'Walk-in')+'</span><span><b>V-No:</b> '+(d.custVno||'-')+'</span></div>'
-    +(d.custAddr?'<div class="a4meta-line"><span><b>Address:</b> '+d.custAddr+'</span></div>':'')
+    +'<div class="a4meta-line"><span><b>Customer:</b> '+(d.custName||'Walk-in')+'</span><span><b>Phone:</b> '+(d.custPhone||'-')+'</span></div>'
+    +'<div class="a4meta-line"><span><b>V-No:</b> '+(d.custVno||'-')+'</span>'+(d.custAddr?'<span><b>Address:</b> '+d.custAddr+'</span>':'<span></span>')+'</div>'
+    +'<div style="margin-bottom:8px"></div>'
     +'<table class="a4t"><thead><tr><th style="width:26px" class="c">Sl.</th><th>Product</th><th style="width:46px" class="c">Qty</th><th style="width:72px" class="r">Rate</th><th style="width:72px" class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div style="display:flex;justify-content:flex-end"><div class="a4sm">'
     +'<div class="a4sr"><span>Taxable Value</span><span>Rs.'+d.taxable.toFixed(2)+'</span></div>'
@@ -806,52 +806,134 @@ function showPreview(){
 function closePrev(){document.getElementById('pmod').classList.remove('open');document.body.style.overflow='';}
 
 /* ── PRINT ── */
-var PST='<style>.a4h{display:flex;justify-content:space-between;align-items:center;border-bottom:2.5px solid #1a1a2e;padding-bottom:10px;margin-bottom:11px;gap:6px}.a4hl{display:flex;align-items:center;gap:9px}.a4lg{width:52px;height:52px;border-radius:50%;object-fit:cover}.a4sn{font-size:18px;font-weight:700;color:#1a1a2e}.a4ss{font-size:9px;color:#555;margin-top:2px;line-height:1.5}.a4mt{font-size:13px;font-weight:700;color:#c8102e;text-align:right}.a4me{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}.a4meta-line{display:flex;justify-content:space-between;gap:16px;font-size:11px;color:#222;padding:3px 0;border-bottom:1px solid #f0f0f0}.a4meta-line:last-of-type{margin-bottom:8px}.a4meta-line span{flex:1}.a4mb{background:#f7f5f0;border:1px solid #ddd;border-radius:4px;padding:5px 7px}.a4mb strong{display:block;font-size:8px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px}.a4mb span{font-size:10px;font-weight:600;color:#111}.a4t{width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px}.a4t th{background:#1a1a2e;color:#fff;padding:5px 6px;text-align:left;font-size:8px;text-transform:uppercase}.a4t .r{text-align:right}.a4t .c{text-align:center}.a4t td{padding:4px 6px;border-bottom:1px solid #eee}.a4sm{margin-left:auto;width:180px;border:1px solid #ddd;border-radius:4px;overflow:hidden;margin-bottom:10px}.a4sr{display:flex;justify-content:space-between;padding:3px 7px;font-size:9px;border-bottom:1px solid #eee}.a4sr:last-child{border-bottom:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:11px;padding:5px 7px}.a4wd{font-size:8px;color:#666;font-style:italic;margin-bottom:8px}.a4bk{font-size:8px;color:#555;background:#f7f5f0;border:1px solid #eee;border-radius:4px;padding:5px 7px;margin-bottom:10px}.a4on{font-weight:700;color:#1a1a2e;font-size:9px;border-bottom:1.5px solid #f4a100;padding-bottom:1px;display:inline}.a4ft{display:flex;justify-content:space-between;padding-top:10px;border-top:1px solid #ddd;font-size:8px;gap:12px}.a4tc strong{display:block;font-size:8px;font-weight:700;color:#111;margin-bottom:2px}.a4sg{text-align:right;min-width:110px}.a4sl{width:100px;border-top:1px solid #111;margin:20px 0 3px auto}.a4sg strong{font-size:9px;font-weight:700;color:#111}.a4sg span{color:#666}<\/style>';
-function doPrint(d){var pa=document.getElementById('pra');pa.innerHTML=PST+buildA4(d);pa.classList.add('show');setTimeout(function(){window.print();pa.classList.remove('show');},200);}
-function printBill(){var d=getBD();if(!d.items.length){showToast('Add at least one item!','er');return;}doPrint(d);}
-function printFromPreview(){doPrint(getBD());}
+/* print/PDF — see buildPDF + openPDF + dlPDF below */
 
 /* ── PDF ── */
-function buildPDF(doc,d){
-  var W=210,M=14,TX=M;
+/* ── BUILD PDF (multi-page aware) ─────────────────────────────────────── */
+function drawPageHeader(doc,d,W,M){
+  var TX=M;
   if(d.showLogo){try{doc.addImage(LOGO,'PNG',M,10,16,16);TX=M+20;}catch(e){}}
   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(26,26,46);doc.text(d.shopname,TX,18);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,90);doc.text(d.address,TX,24);doc.text('Mob: '+d.mobile+'   GST: '+d.gstin,TX,29);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,90);
+  doc.text(d.address,TX,24);doc.text('Mob: '+d.mobile+'   GST: '+d.gstin,TX,29);
   doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(200,16,46);doc.text('CASH / CREDIT MEMO',W-M,18,{align:'right'});
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100);doc.text(d.billType.toUpperCase(),W-M,24,{align:'right'});
   doc.setDrawColor(26,26,46);doc.setLineWidth(0.5);doc.line(M,33,W-M,33);
+}
+function drawCustomerMeta(doc,d,W,M){
   doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(40);
   doc.text('Invoice No: '+d.invoiceNo,M,39);doc.text('Date: '+fmtD(d.date),W/2,39);
-  doc.text('Customer: '+(d.custName||'Walk-in'),M,44);doc.text('V-No: '+(d.custVno||'-'),W/2,44);
-  var tY=49;if(d.custAddr){doc.text('Address: '+d.custAddr,M,49);tY=54;}
-  doc.autoTable({startY:tY,head:[['Sl.','Product Name','Qty','Rate (Rs.)','Amount (Rs.)']],
-    body:d.items.map(function(i){return[i.sl,i.name,i.qty,i.rate.toFixed(2),i.amount.toFixed(2)];}),
-    styles:{fontSize:8,cellPadding:2.5},headStyles:{fillColor:[26,26,46],textColor:255,fontStyle:'bold'},
-    columnStyles:{0:{cellWidth:11,halign:'center'},2:{cellWidth:16,halign:'center'},3:{cellWidth:26,halign:'right'},4:{cellWidth:28,halign:'right'}},
-    margin:{left:M,right:M}});
-  var y=doc.lastAutoTable.finalY+4;
-  var sr=[['Taxable Value','Rs.'+d.taxable.toFixed(2)],['SGST '+d.gstRate+'%','Rs.'+d.sgst.toFixed(2)],['CGST '+d.gstRate+'%','Rs.'+d.cgst.toFixed(2)],['Sub Total','Rs.'+d.subtotal.toFixed(2)]];
+  doc.text('Customer: '+(d.custName||'Walk-in'),M,44);doc.text('Phone: '+(d.custPhone||'-'),W/2,44);
+  doc.text('V-No: '+(d.custVno||'-'),M,49);
+  var tY=54;
+  if(d.custAddr){doc.text('Address: '+d.custAddr,M,54);tY=59;}
+  return tY;
+}
+function drawFooterBlock(doc,d,W,M,y){
+  /* check if footer block (~45mm) fits on current page; if not, add new page */
+  var pageH=297;
+  if(y+45>pageH-M){
+    doc.addPage();
+    /* repeat compact header on continuation page */
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(26,26,46);doc.text(d.shopname,M,14);
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);doc.text('Invoice: '+d.invoiceNo+'   (continued)',M,19);
+    doc.setDrawColor(26,26,46);doc.setLineWidth(0.3);doc.line(M,22,W-M,22);
+    y=28;
+  }
+  /* summary table */
+  var sr=[['Taxable Value','Rs.'+d.taxable.toFixed(2)],
+    ['SGST '+d.gstRate+'%','Rs.'+d.sgst.toFixed(2)],
+    ['CGST '+d.gstRate+'%','Rs.'+d.cgst.toFixed(2)],
+    ['Sub Total','Rs.'+d.subtotal.toFixed(2)]];
   if(d.discAmt>0)sr.push(['Discount'+(d.discType==='pct'?' ('+d.discVal+'%)':''),'- Rs.'+d.discAmt.toFixed(2)]);
   doc.autoTable({startY:y,body:sr,foot:[['TOTAL','Rs.'+d.total.toFixed(2)]],
-    styles:{fontSize:8,cellPadding:2},footStyles:{fillColor:[26,26,46],textColor:255,fontStyle:'bold',fontSize:10},
-    columnStyles:{0:{cellWidth:76},1:{cellWidth:38,halign:'right'}},margin:{left:W-M-116,right:M},tableWidth:116});
+    styles:{fontSize:8,cellPadding:2},
+    footStyles:{fillColor:[26,26,46],textColor:255,fontStyle:'bold',fontSize:10},
+    columnStyles:{0:{cellWidth:76},1:{cellWidth:38,halign:'right'}},
+    margin:{left:W-M-116,right:M},tableWidth:116});
   y=doc.lastAutoTable.finalY+4;
-  doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(100);doc.text(d.amountWords,M,y);
-  y+=6;doc.setFillColor(247,245,240);doc.rect(M,y,W-2*M,13,'F');
+  /* amount in words */
+  doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(100);
+  doc.text(d.amountWords,M,y);
+  y+=7;
+  /* bank box */
+  doc.setFillColor(247,245,240);doc.setDrawColor(220,220,220);doc.setLineWidth(0.2);
+  doc.rect(M,y,W-2*M,13,'FD');
   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(26,26,46);doc.text(d.acname,M+2,y+5);
-  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(80);doc.text('A/C: '+d.acno+'   '+d.bankname+', '+d.branch+'   IFSC: '+d.ifsc,M+2,y+10);
-  y+=17;doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(40);doc.text('Terms & Conditions:',M,y);
-  doc.setFont('helvetica','normal');doc.text(doc.splitTextToSize(d.terms,110),M,y+4);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(80);
+  doc.text('A/C: '+d.acno+'   '+d.bankname+', '+d.branch+'   IFSC: '+d.ifsc,M+2,y+10);
+  y+=17;
+  /* terms + signature */
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(40);doc.text('Terms & Conditions:',M,y);
+  doc.setFont('helvetica','normal');
+  var tlines=doc.splitTextToSize(d.terms,W/2-M-4);
+  doc.text(tlines,M,y+4);
   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(26,26,46);doc.text(d.authby,W-M,y+10,{align:'right'});
-  doc.line(W-M-46,y+14,W-M,y+14);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);doc.text('Authorised Signatory',W-M,y+18,{align:'right'});
-  /* embed for re-edit */
+  doc.line(W-M-46,y+14,W-M,y+14);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);doc.text('Authorised Signatory',W-M,y+18,{align:'right'});
+}
+function buildPDF(doc,d){
+  var W=210,M=14;
+  drawPageHeader(doc,d,W,M);
+  var tY=drawCustomerMeta(doc,d,W,M);
+  /* items table — autoTable handles page breaks automatically */
+  doc.autoTable({
+    startY:tY,
+    head:[['Sl.','Product Name','Qty','Rate (Rs.)','Amount (Rs.)']],
+    body:d.items.map(function(i){return[i.sl,i.name,i.qty,i.rate.toFixed(2),i.amount.toFixed(2)];}),
+    styles:{fontSize:8,cellPadding:2.5},
+    headStyles:{fillColor:[26,26,46],textColor:255,fontStyle:'bold'},
+    columnStyles:{0:{cellWidth:11,halign:'center'},2:{cellWidth:16,halign:'center'},3:{cellWidth:26,halign:'right'},4:{cellWidth:28,halign:'right'}},
+    margin:{left:M,right:M},
+    didDrawPage:function(data){
+      /* on continuation pages, redraw a compact header */
+      if(data.pageNumber>1){
+        doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(26,26,46);doc.text(d.shopname,M,10);
+        doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);doc.text('Invoice: '+d.invoiceNo+'   (continued)',M,15);
+        doc.setDrawColor(26,26,46);doc.setLineWidth(0.3);doc.line(M,18,W-M,18);
+      }
+    }
+  });
+  var y=doc.lastAutoTable.finalY+4;
+  drawFooterBlock(doc,d,W,M,y);
+  /* embed data invisibly for PDF re-edit feature */
+  var pg=doc.getNumberOfPages();
+  doc.setPage(pg);
   doc.setTextColor(255,255,255);doc.setFontSize(1);
-  doc.text('SAI_BILL_DATA_START'+encodeURIComponent(JSON.stringify(d))+'SAI_BILL_DATA_END',M,297);
+  doc.text('SAI_BILL_DATA_START'+encodeURIComponent(JSON.stringify(d))+'SAI_BILL_DATA_END',M,296);
+}
+
+/* open PDF in new tab for printing — identical output to download */
+function openPDF(d){
+  try{
+    var doc=new window.jspdf.jsPDF({format:'a4',unit:'mm'});
+    buildPDF(doc,d);
+    var blob=doc.output('blob');
+    var url=URL.createObjectURL(blob);
+    var tab=window.open(url,'_blank');
+    if(!tab){showToast('Allow popups to print.','er');}
+    /* revoke URL after tab loads to free memory */
+    setTimeout(function(){try{URL.revokeObjectURL(url);}catch(e){}},60000);
+  }catch(e){showToast('Could not open print preview.','er');}
+}
+function printBill(){
+  var d=getBD();
+  if(!d.items.length){showToast('Add at least one item!','er');return;}
+  showToast('Opening print preview...','ok');
+  openPDF(d);
+}
+function printFromPreview(){
+  var d=getBD();
+  if(!d.items.length){showToast('Add at least one item!','er');return;}
+  showToast('Opening print preview...','ok');
+  openPDF(d);
 }
 function dlPDF(){
-  var d=getBD();if(!d.items.length){showToast('Add at least one item!','er');return;}
+  var d=getBD();
+  if(!d.items.length){showToast('Add at least one item!','er');return;}
   var doc=new window.jspdf.jsPDF({format:'a4',unit:'mm'});
-  buildPDF(doc,d);doc.save('saibookstore-'+d.invoiceNo+'.pdf');
+  buildPDF(doc,d);
+  doc.save('saibookstore-'+d.invoiceNo+'.pdf');
   showToast('PDF downloaded!','ok');
 }
 
@@ -866,14 +948,14 @@ function saveBill(){
 }
 function shareWA(){
   var d=getBD();if(!d.items.length){showToast('Add at least one item!','er');return;}
-  var ph=(d.custVno||'').replace(/\D/g,'');
+  var ph=(d.custPhone||'').replace(/\D/g,'');
   var msg='Dear '+(d.custName||'Customer')+',\n\nThank you for your purchase at '+d.shopname+'.\n\nBill No: '+d.invoiceNo+'\nDate: '+fmtD(d.date)+'\nAmount: Rs.'+d.total.toFixed(2)+'\n'+d.amountWords+'\n\nYour bill PDF is attached.\n\n- '+d.shopname+'\nMob: '+d.mobile;
   window.open(ph?'https://wa.me/91'+ph+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg),'saiWA');
   dlPDF();showToast('WhatsApp opened + PDF downloaded!','ok');
 }
 function newBill(){
   if(!confirm('Clear form and start a new bill?'))return;
-  ['cust-name','cust-vno','cust-addr'].forEach(function(id){document.getElementById(id).value='';});
+  ['cust-name','cust-phone','cust-vno','cust-addr'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('discount').value=0;document.getElementById('bill-type').value='cash';
   document.getElementById('gst-rate').value=S.gstrate||'9';
   document.getElementById('items-body').innerHTML='';RC=0;
@@ -898,7 +980,13 @@ function loadHist(i){
 }
 function prevHist(i){document.getElementById('a4c').innerHTML=buildA4(bills[i]);document.getElementById('pmod').classList.add('open');document.getElementById('pmod').scrollTop=0;document.body.style.overflow='hidden';}
 function delBill(i){if(confirm('Delete this bill?')){bills.splice(i,1);renderHistory();showToast('Deleted.');}}
-function dlHist(i){var d=bills[i];var doc=new window.jspdf.jsPDF({format:'a4',unit:'mm'});buildPDF(doc,d);doc.save('saibookstore-'+d.invoiceNo+'.pdf');showToast('PDF downloaded!','ok');}
+function dlHist(i){
+  var d=bills[i];
+  var doc=new window.jspdf.jsPDF({format:'a4',unit:'mm'});
+  buildPDF(doc,d);
+  doc.save('saibookstore-'+d.invoiceNo+'.pdf');
+  showToast('PDF downloaded!','ok');
+}
 
 /* ── SETTINGS ── */
 function applyUI(){
